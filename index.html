@@ -145,35 +145,45 @@
 
     function onScanFailure(error){ }
 
-    async function startCamera(cameraId){
-      if(!cameraId) cameraId = cameraSelect.value;
-      if(!cameraId){
-        alert('No camera selected or available.');
-        return;
-      }
-      if(html5QrcodeScanner){
-        try{ await html5QrcodeScanner.stop(); }catch(e){}
-        html5QrcodeScanner.clear();
-        html5QrcodeScanner = null;
-      }
+  async function startCamera(cameraId){
+  // iOS Safari special case
+  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-      html5QrcodeScanner = new Html5Qrcode("reader");
-      const config = { fps: 10, qrbox: {width: 250, height: 250} };
-      startBtn.disabled = true;
-      try{
-        await html5QrcodeScanner.start(
-          cameraId,
-          config,
-          onScanSuccess,
-          onScanFailure
-        );
-        stopBtn.disabled = false;
-      }catch(err){
-        alert('Could not start camera: ' + err);
-        setResult('Error starting camera.');
-        startBtn.disabled = false;
-      }
+  if(isiOS && isSafari){
+    cameraId = { facingMode: "environment" }; // Force back camera
+  } else {
+    if(!cameraId) cameraId = cameraSelect.value;
+    if(!cameraId){
+      alert('No camera selected or available.');
+      return;
     }
+  }
+
+  if(html5QrcodeScanner){
+    try{ await html5QrcodeScanner.stop(); }catch(e){}
+    html5QrcodeScanner.clear();
+    html5QrcodeScanner = null;
+  }
+
+  html5QrcodeScanner = new Html5Qrcode("reader");
+  const config = { fps: 10, qrbox: {width: 250, height: 250} };
+  startBtn.disabled = true;
+  try{
+    await html5QrcodeScanner.start(
+      cameraId,
+      config,
+      onScanSuccess,
+      onScanFailure
+    );
+    stopBtn.disabled = false;
+  }catch(err){
+    alert('Could not start camera: ' + err);
+    setResult('Error starting camera.');
+    startBtn.disabled = false;
+  }
+}
+
 
     async function stopCamera(){
       if(!html5QrcodeScanner) return;
