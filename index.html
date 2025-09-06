@@ -23,6 +23,7 @@
     .result{word-break:break-all; font-size:14px; padding:10px; border-radius:8px; background:#041428; min-height:44px}
     footer{font-size:13px; color:var(--muted); margin-top:12px}
     .small{font-size:13px; color:var(--muted)}
+    .warning{background:#402020; color:#ffaaaa; padding:10px; border-radius:8px; margin-bottom:10px; font-size:14px;}
   </style>
 </head>
 <body>
@@ -34,6 +35,10 @@
         <p class="lead">Scan QR codes with your camera or upload an image. The decoded text displays below.</p>
       </div>
     </header>
+
+    <div id="iosWarning" class="warning" style="display:none">
+      ⚠️ On iPhone/iPad: Please open this site in <strong>Safari</strong> for camera scanning to work. Other browsers like Chrome/Edge on iOS cannot access the camera.
+    </div>
 
     <div class="grid">
       <div>
@@ -95,10 +100,22 @@
     const stopBtn = document.getElementById('stopBtn');
     const cameraSelect = document.getElementById('cameraSelect');
     const fileInput = document.getElementById('fileInput');
+    const iosWarning = document.getElementById('iosWarning');
+
+    // Detect iOS + non-Safari
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+    function isSafari() {
+      return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    }
+
+    if (isIOS() && !isSafari()) {
+      iosWarning.style.display = 'block';
+    }
 
     // html5-qrcode instance
     let html5QrcodeScanner = null;
-    let currentCameraId = null;
 
     function setResult(text){
       if(!text) text = '— nothing scanned yet —';
@@ -117,22 +134,16 @@
         });
         if(devices.length) cameraSelect.value = devices[0].id;
       }catch(e){
-        // Not allowed or no camera
+        console.error("Camera error:", e);
         cameraSelect.innerHTML = '<option value="">No cameras found</option>';
       }
     }
 
     function onScanSuccess(decodedText, decodedResult){
-      // handle the scanned code as you like
       setResult(decodedText);
-      // if you want to stop after first scan uncomment:
-      // stopCamera();
     }
 
-    function onScanFailure(error){
-      // scan failure, continue scanning
-      // console.log('scan failure', error);
-    }
+    function onScanFailure(error){ }
 
     async function startCamera(cameraId){
       if(!cameraId) cameraId = cameraSelect.value;
@@ -146,7 +157,7 @@
         html5QrcodeScanner = null;
       }
 
-      html5QrcodeScanner = new Html5Qrcode(/* element id */ "reader");
+      html5QrcodeScanner = new Html5Qrcode("reader");
       const config = { fps: 10, qrbox: {width: 250, height: 250} };
       startBtn.disabled = true;
       try{
@@ -183,7 +194,6 @@
 
     cameraSelect.addEventListener('change', async ()=>{
       if(!html5QrcodeScanner) return;
-      // restart with new camera
       await startCamera(cameraSelect.value);
     });
 
@@ -192,20 +202,18 @@
       if(!file) return;
       setResult('Decoding image...');
       try{
-        const html5Qr = new Html5Qrcode(/* element id unused for file */ 'reader');
-        const result = await Html5Qrcode.scanFileV2(file, /* showImage= */ false);
+        const html5Qr = new Html5Qrcode('reader');
+        const result = await Html5Qrcode.scanFileV2(file, false);
         if(result && result.decodedText){
           setResult(result.decodedText);
         } else {
           setResult('No QR code found in image.');
         }
-        // no need to clear since this instance was only used for file
       }catch(err){
         setResult('Could not decode image: ' + err);
       }
     });
 
-    // on load: try listing cameras so user sees options
     (async ()=>{
       await listCameras();
       setResult();
