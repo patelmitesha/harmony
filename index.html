@@ -1,248 +1,52 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QR Reader — GitHub Pages Ready</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-    :root{--bg:#0f1724;--card:#111827;--muted:#94a3b8;--accent:#06b6d4}
-    *{box-sizing:border-box}
-    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#020617 0%, #071028 100%); color:#e6eef8}
-    .wrap{width:980px; max-width:96%; background:var(--card); border-radius:12px; padding:18px; box-shadow:0 8px 30px rgba(2,6,23,.6)}
-    header{display:flex; gap:12px; align-items:center}
-    h1{font-size:20px; margin:0}
-    p.lead{margin:6px 0 14px;color:var(--muted)}
-    .grid{display:grid; grid-template-columns: 1fr 360px; gap:16px}
-    @media (max-width:880px){.grid{grid-template-columns:1fr}}
-    .viewer{background:#071226; border-radius:10px; padding:10px; min-height:320px; display:flex; flex-direction:column; gap:10px}
-    #reader{width:100%; border-radius:8px; overflow:hidden; background:#000; min-height:240px}
-    .controls{display:flex; gap:8px; flex-wrap:wrap}
-    button{background:transparent;border:1px solid rgba(255,255,255,.06); padding:8px 10px; border-radius:8px; color:inherit; cursor:pointer}
-    .info{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)); padding:10px; border-radius:8px; font-size:14px}
-    label.select{display:inline-flex; align-items:center; gap:8px}
-    .result{word-break:break-all; font-size:14px; padding:10px; border-radius:8px; background:#041428; min-height:44px}
-    footer{font-size:13px; color:var(--muted); margin-top:12px}
-    .small{font-size:13px; color:var(--muted)}
-    .warning{background:#402020; color:#ffaaaa; padding:10px; border-radius:8px; margin-bottom:10px; font-size:14px;}
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #reader {
+      width: 300px;
+      margin: auto;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      color: green;
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="#06b6d4" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="#06b6d4" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="#06b6d4" stroke-width="1.5"/></svg>
-      <div>
-        <h1>QR Reader — ready for GitHub Pages</h1>
-        <p class="lead">Scan QR codes with your camera or upload an image. The decoded text displays below.</p>
-      </div>
-    </header>
+  <h2>QR Code Scanner</h2>
+  <div id="reader"></div>
+  <p id="result">Scan a QR code to see result here...</p>
 
-    <div id="iosWarning" class="warning" style="display:none">
-      ⚠️ On iPhone/iPad: Please open this site in <strong>Safari</strong> for camera scanning to work. Other browsers like Chrome/Edge on iOS cannot access the camera.
-    </div>
-
-    <div class="grid">
-      <div>
-        <div class="viewer">
-          <div id="reader"></div>
-
-          <div class="controls">
-            <button id="startBtn">Start camera</button>
-            <button id="stopBtn" disabled>Stop camera</button>
-
-            <label class="select small">Camera:
-              <select id="cameraSelect"></select>
-            </label>
-
-            <label class="select small">or upload:
-              <input id="fileInput" type="file" accept="image/*" />
-            </label>
-          </div>
-
-          <div class="info">
-            <div><strong>Decoded value</strong></div>
-            <div id="result" class="result">— nothing scanned yet —</div>
-          </div>
-        </div>
-
-        <footer>
-          Tips: allow camera permission, choose the back camera on phones for better scanning. Works on HTTPS (GitHub Pages provides HTTPS).
-        </footer>
-      </div>
-
-      <aside>
-        <div class="info">
-          <strong>How it works</strong>
-          <p class="small">This page uses the open-source <code>html5-qrcode</code> library to access your camera, scan frames for QR codes and decode them in the browser. No data leaves your device.</p>
-          <hr/>
-          <p class="small"><strong>Use cases:</strong><br/>Attendance, quick links, scanning product tags, demos.</p>
-        </div>
-
-        <div style="height:12px"></div>
-
-        <div class="info">
-          <strong>Deploy on GitHub Pages</strong>
-          <ol class="small">
-            <li>Create a repository and add this file as <code>index.html</code>.</li>
-            <li>Commit & push to the <code>main</code> branch.</li>
-            <li>In repo Settings → Pages, set Source to <code>main / root</code>. Visit <code>https://&lt;username&gt;.github.io/&lt;repo&gt;</code>.</li>
-          </ol>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <!-- Html5-qrcode CDN -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
   <script>
-    const resultEl = document.getElementById('result');
-    const readerEl = document.getElementById('reader');
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const cameraSelect = document.getElementById('cameraSelect');
-    const fileInput = document.getElementById('fileInput');
-    const iosWarning = document.getElementById('iosWarning');
+    function onScanSuccess(decodedText) {
+      document.getElementById("result").innerText = "Scanned: " + decodedText;
 
-    // Detect iOS + non-Safari
-    function isIOS() {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    }
-    function isSafari() {
-      return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    }
-
-    if (isIOS() && !isSafari()) {
-      iosWarning.style.display = 'block';
-    }
-
-    // html5-qrcode instance
-    let html5QrcodeScanner = null;
-
-    function setResult(text){
-      if(!text) text = '— nothing scanned yet —';
-      resultEl.textContent = text;
-    }
-
-   async function listCameras(){
-  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-  if(isiOS && isSafari){
-    // iOS Safari: don't try to enumerate (will fail)
-    cameraSelect.innerHTML = '';
-    const opt = document.createElement('option');
-    opt.value = 'ios-back-camera';
-    opt.textContent = 'Back Camera (iOS Safari)';
-    cameraSelect.appendChild(opt);
-    cameraSelect.value = opt.value;
-    return;
-  }
-
-  try {
-    const devices = await Html5Qrcode.getCameras();
-    cameraSelect.innerHTML = '';
-    devices.forEach(dev => {
-      const opt = document.createElement('option');
-      opt.value = dev.id;
-      opt.textContent = dev.label || dev.id;
-      cameraSelect.appendChild(opt);
-    });
-    if (devices.length) cameraSelect.value = devices[0].id;
-  } catch(e) {
-    console.error("Camera error:", e);
-    cameraSelect.innerHTML = '<option value="">No cameras found</option>';
-  }
-}
-
-
-    function onScanSuccess(decodedText, decodedResult){
-      setResult(decodedText);
-    }
-
-    function onScanFailure(error){ }
-
-  async function startCamera(cameraId){
-  // iOS Safari special case
-  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-  if(isiOS && isSafari){
-    cameraId = { facingMode: "environment" }; // Force back camera
-  } else {
-    if(!cameraId) cameraId = cameraSelect.value;
-    if(!cameraId){
-      alert('No camera selected or available.');
-      return;
-    }
-  }
-
-  if(html5QrcodeScanner){
-    try{ await html5QrcodeScanner.stop(); }catch(e){}
-    html5QrcodeScanner.clear();
-    html5QrcodeScanner = null;
-  }
-
-  html5QrcodeScanner = new Html5Qrcode("reader");
-  const config = { fps: 10, qrbox: {width: 250, height: 250} };
-  startBtn.disabled = true;
-  try{
-    await html5QrcodeScanner.start(
-      cameraId,
-      config,
-      onScanSuccess,
-      onScanFailure
-    );
-    stopBtn.disabled = false;
-  }catch(err){
-    alert('Could not start camera: ' + err);
-    setResult('Error starting camera.');
-    startBtn.disabled = false;
-  }
-}
-
-
-    async function stopCamera(){
-      if(!html5QrcodeScanner) return;
-      try{
-        await html5QrcodeScanner.stop();
-      }catch(e){}
-      try{ html5QrcodeScanner.clear(); }catch(e){}
-      html5QrcodeScanner = null;
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-    }
-
-    startBtn.addEventListener('click', async ()=>{
-      await listCameras();
-      await startCamera(cameraSelect.value);
-    });
-    stopBtn.addEventListener('click', stopCamera);
-
-    cameraSelect.addEventListener('change', async ()=>{
-      if(!html5QrcodeScanner) return;
-      await startCamera(cameraSelect.value);
-    });
-
-    fileInput.addEventListener('change', async (e)=>{
-      const file = e.target.files && e.target.files[0];
-      if(!file) return;
-      setResult('Decoding image...');
-      try{
-        const html5Qr = new Html5Qrcode('reader');
-        const result = await Html5Qrcode.scanFileV2(file, false);
-        if(result && result.decodedText){
-          setResult(result.decodedText);
-        } else {
-          setResult('No QR code found in image.');
-        }
-      }catch(err){
-        setResult('Could not decode image: ' + err);
+      // ✅ Auto redirect if it's a URL
+      if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
+        window.location.href = decodedText;
       }
-    });
+    }
 
-    (async ()=>{
-      await listCameras();
-      setResult();
-    })();
+    function onScanError(errorMessage) {
+      // Ignore errors (camera focusing, etc.)
+    }
+
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader",
+      { fps: 10, qrbox: 250 }
+    );
+    html5QrcodeScanner.render(onScanSuccess, onScanError);
   </script>
 </body>
 </html>
