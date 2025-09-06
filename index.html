@@ -21,7 +21,7 @@
   <script>
 console.log("Welcome");
     
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyr1BtITqL8tvzwI_xYpg0PNs8W6ccxMMyFz1NmtzA9nfcizir2pDw3bV7DtgxbNgxc/exec"; // <-- replace with your Apps Script URL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVI3dvw3P7aIixFm-hm1NgbU3uGxJOSFWw2jD3CT3RVGOf41ByfSp5cl0enZFA5l8D/exec"; // <-- replace with your Apps Script URL
     let currentFlat = null;
 
     function onScanSuccess(decodedText) {
@@ -30,7 +30,7 @@ console.log("Welcome");
 
       console.log("Making API call to:", WEB_APP_URL);
 fetch(WEB_APP_URL, {
-  method: "POST",
+  method: "GET",
   body: JSON.stringify({ flat: decodedText, action: "fetch" }),
   headers: { "Content-Type": "application/json" }
 })
