@@ -3,43 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Code Scanner</title>
+  <title>QR Code Attendance</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    #reader {
-      width: 300px;
-      margin: auto;
-    }
-    #result {
-      margin-top: 20px;
-      font-size: 18px;
-      color: green;
-      word-break: break-word;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    #reader { width: 300px; margin: auto; }
+    #info { margin-top: 20px; font-size: 18px; }
+    #saveBtn { display: none; margin-top: 20px; padding: 10px 20px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <h2>QR Code Scanner</h2>
+  <h2>QR Code Attendance</h2>
   <div id="reader"></div>
-  <p id="result">Scan a QR code to see result here...</p>
+  <div id="info"></div>
+  <button id="saveBtn" onclick="markAttended()">Save Attendance</button>
 
   <script>
-    function onScanSuccess(decodedText) {
-      document.getElementById("result").innerText = "Scanned: " + decodedText;
+    const WEB_APP_URL = "YOUR_WEB_APP_URL"; // <-- replace with your Apps Script URL
+    let currentFlat = null;
 
-      // ✅ Auto redirect if it's a URL
-      if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
-        window.location.href = decodedText;
-      }
+    function onScanSuccess(decodedText) {
+      currentFlat = decodedText;
+      document.getElementById("info").innerText = "Checking flat " + decodedText + "...";
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ flat: decodedText, action: "fetch" }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById("info").innerHTML =
+            `<b>Flat:</b> ${data.flat}<br>
+             <b>Persons:</b> ${data.persons}<br>
+             <b>Food:</b> ${data.food}<br>
+             <b>Attended:</b> ${data.attended}`;
+          document.getElementById("saveBtn").style.display = data.attended ? "none" : "inline-block";
+        } else {
+          document.getElementById("info").innerText = "❌ Flat not found";
+          document.getElementById("saveBtn").style.display = "none";
+        }
+      });
     }
 
     function onScanError(errorMessage) {
-      // Ignore errors (camera focusing, etc.)
+      // Ignore camera errors
+    }
+
+    function markAttended() {
+      if (!currentFlat) return;
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ flat: currentFlat, action: "update" }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById("info").innerText = "✅ Attendance marked for Flat " + currentFlat;
+          document.getElementById("saveBtn").style.display = "none";
+        }
+      });
     }
 
     let html5QrcodeScanner = new Html5QrcodeScanner(
