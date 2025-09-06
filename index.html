@@ -4,86 +4,83 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR Code Attendance</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
     #reader { width: 300px; margin: auto; }
-    #info { margin-top: 20px; font-size: 18px; }
-    #saveBtn { display: none; margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+    #result { margin-top: 20px; font-size: 18px; font-weight: bold; }
+    button { margin-top: 15px; padding: 10px 20px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <h2>QR Code Attendance</h2>
+  <h1>QR Code Attendance</h1>
   <div id="reader"></div>
-  <div id="info"></div>
-  <button id="saveBtn" onclick="markAttended()">Save Attendance</button>
+  <p id="result">Scan a QR code...</p>
+  <button id="updateBtn" style="display:none;">Mark Attendance</button>
 
   <script>
-console.log("Welcome");
-    
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVI3dvw3P7aIixFm-hm1NgbU3uGxJOSFWw2jD3CT3RVGOf41ByfSp5cl0enZFA5l8D/exec"; // <-- replace with your Apps Script URL
+    // 🔹 Replace this with your Google Apps Script Web App URL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwCcSmUuCVc2NvyIL2GrJ43tCtjJw_HlbDeXBX7YEOtKMNc6e5h_GCqCgBTXl1KuibE/exec";
+
     let currentFlat = null;
 
-    function onScanSuccess(decodedText) {
-      currentFlat = decodedText;
-      document.getElementById("info").innerText = "Checking flat " + decodedText + "...";
+    async function checkFlat(flatNumber) {
+      document.getElementById("result").innerText = `Checking flat ${flatNumber}...`;
 
-      console.log("Making API call to:", WEB_APP_URL);
-fetch(WEB_APP_URL, {
-  method: "GET",
-  body: JSON.stringify({ flat: decodedText, action: "fetch" }),
-  headers: { "Content-Type": "application/json" }
-})
-.then(res => res.json())
-.then(data => console.log("API Response:", data))
-.catch(err => console.error("Fetch error:", err));
-      
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ flat: decodedText, action: "fetch" }),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(res => res.json())
-      .then(data => {
+      try {
+        const response = await fetch(`${WEB_APP_URL}?action=fetch&flat=${flatNumber}`);
+        const data = await response.json();
+
         if (data.success) {
-          document.getElementById("info").innerHTML =
-            `<b>Flat:</b> ${data.flat}<br>
-             <b>Persons:</b> ${data.persons}<br>
-             <b>Food:</b> ${data.food}<br>
-             <b>Attended:</b> ${data.attended}`;
-          document.getElementById("saveBtn").style.display = data.attended ? "none" : "inline-block";
+          currentFlat = flatNumber;
+          document.getElementById("result").innerText =
+            `Flat ${data.flat} → Persons: ${data.persons}, Food: ${data.food}, Attended: ${data.attended}`;
+          document.getElementById("updateBtn").style.display = "inline-block";
         } else {
-          document.getElementById("info").innerText = "❌ Flat not found";
-          document.getElementById("saveBtn").style.display = "none";
+          document.getElementById("result").innerText = data.message;
+          document.getElementById("updateBtn").style.display = "none";
         }
-      });
+      } catch (err) {
+        document.getElementById("result").innerText = "Error: " + err;
+        document.getElementById("updateBtn").style.display = "none";
+      }
     }
 
-    function onScanError(errorMessage) {
-      // Ignore camera errors
-    }
-
-    function markAttended() {
+    async function updateAttendance() {
       if (!currentFlat) return;
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ flat: currentFlat, action: "update" }),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(res => res.json())
-      .then(data => {
+
+      try {
+        const response = await fetch(`${WEB_APP_URL}?action=update&flat=${currentFlat}`);
+        const data = await response.json();
+
         if (data.success) {
-          document.getElementById("info").innerText = "✅ Attendance marked for Flat " + currentFlat;
-          document.getElementById("saveBtn").style.display = "none";
+          document.getElementById("result").innerText = 
+            `Attendance marked for flat ${currentFlat}`;
+          document.getElementById("updateBtn").style.display = "none";
+        } else {
+          document.getElementById("result").innerText = "Failed to update attendance";
         }
-      });
+      } catch (err) {
+        document.getElementById("result").innerText = "Error: " + err;
+      }
     }
 
-    let html5QrcodeScanner = new Html5QrcodeScanner(
+    document.getElementById("updateBtn").addEventListener("click", updateAttendance);
+
+    // 🔹 Start QR scanner
+    function onScanSuccess(decodedText) {
+      if (/^\d+$/.test(decodedText)) { // only numbers (flat no.)
+        checkFlat(decodedText);
+      } else {
+        document.getElementById("result").innerText = "Invalid QR code!";
+      }
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
       "reader",
       { fps: 10, qrbox: 250 }
     );
-    html5QrcodeScanner.render(onScanSuccess, onScanError);
+    html5QrcodeScanner.render(onScanSuccess);
   </script>
 </body>
 </html>
