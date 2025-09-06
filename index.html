@@ -122,22 +122,37 @@
       resultEl.textContent = text;
     }
 
-    async function listCameras(){
-      try{
-        const devices = await Html5Qrcode.getCameras();
-        cameraSelect.innerHTML = '';
-        devices.forEach(dev => {
-          const opt = document.createElement('option');
-          opt.value = dev.id;
-          opt.textContent = dev.label || dev.id;
-          cameraSelect.appendChild(opt);
-        });
-        if(devices.length) cameraSelect.value = devices[0].id;
-      }catch(e){
-        console.error("Camera error:", e);
-        cameraSelect.innerHTML = '<option value="">No cameras found</option>';
-      }
-    }
+   async function listCameras(){
+  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  if(isiOS && isSafari){
+    // iOS Safari: don't try to enumerate (will fail)
+    cameraSelect.innerHTML = '';
+    const opt = document.createElement('option');
+    opt.value = 'ios-back-camera';
+    opt.textContent = 'Back Camera (iOS Safari)';
+    cameraSelect.appendChild(opt);
+    cameraSelect.value = opt.value;
+    return;
+  }
+
+  try {
+    const devices = await Html5Qrcode.getCameras();
+    cameraSelect.innerHTML = '';
+    devices.forEach(dev => {
+      const opt = document.createElement('option');
+      opt.value = dev.id;
+      opt.textContent = dev.label || dev.id;
+      cameraSelect.appendChild(opt);
+    });
+    if (devices.length) cameraSelect.value = devices[0].id;
+  } catch(e) {
+    console.error("Camera error:", e);
+    cameraSelect.innerHTML = '<option value="">No cameras found</option>';
+  }
+}
+
 
     function onScanSuccess(decodedText, decodedResult){
       setResult(decodedText);
