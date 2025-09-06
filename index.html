@@ -26,6 +26,16 @@
       currentFlat = decodedText;
       document.getElementById("info").innerText = "Checking flat " + decodedText + "...";
 
+      console.log("Making API call to:", WEB_APP_URL);
+fetch(WEB_APP_URL, {
+  method: "POST",
+  body: JSON.stringify({ flat: decodedText, action: "fetch" }),
+  headers: { "Content-Type": "application/json" }
+})
+.then(res => res.json())
+.then(data => console.log("API Response:", data))
+.catch(err => console.error("Fetch error:", err));
+      
       fetch(WEB_APP_URL, {
         method: "POST",
         body: JSON.stringify({ flat: decodedText, action: "fetch" }),
